@@ -10,24 +10,22 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            overflow: hidden; /* Disable scrolling */
-            background-color: #2c3e50; /* Blue background */
+            overflow: hidden; /* Disable scrolling on the body */
         }
 
-        /* Ensure the game section and iframe take full screen but with limits */
+        /* Ensure the game section and iframe take full screen */
         #game {
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden; /* Ensure no scrolling within the game section */
         }
 
         iframe {
-            width: 80%; /* Scale the width to 80% of the screen */
-            height: 80%; /* Scale the height to 80% of the screen */
-            max-width: 800px; /* Maximum width */
-            max-height: 600px; /* Maximum height */
-            border: none;
+            width: 100vw; /* Make iframe fill the viewport width */
+            height: 100vh; /* Make iframe fill the viewport height */
+            border: none;  /* Remove any borders */
         }
     </style>
 </head>
@@ -41,7 +39,6 @@
     <!-- Disable arrow key scrolling -->
     <script>
         window.addEventListener("keydown", function(e) {
-            // Prevent default behavior for arrow keys (37: left, 38: up, 39: right, 40: down)
             if ([37, 38, 39, 40].indexOf(e.keyCode) > -1) {
                 e.preventDefault();
             }
