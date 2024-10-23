@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossy Cat</title>
+    <style>
+        /* Game container */
+        #game {
+            position: relative;
+            width: 600px;
+            height: 840px;
+            background: linear-gradient(to bottom, #4CAF50 20%, #888888 80%); /* Green top safe zone, grey roads */
+            margin: 0 auto;
+            border: 3px solid #333;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Frog (Player) */
+        .frog {
+            width: 50px;
+            height: 50px;
+            background: url('cat.png.png') no-repeat center;
+            background-size: contain;
+            position: absolute;
+            bottom: 0;
+            left: 275px;
+            z-index: 10;
+        }
+
+        /* Inverted Frog */
+        .frog-left {
+            background: url('INVERTcat.png.png') no-repeat center;
+            background-size: contain;
+        }
+
+        /* Road lanes */
+        .lane.road {
+            width: 100%;
+            height: 70px;
+            background-color: #555; /* Dark grey for roads */
+            position: absolute;
+            border-top: 3px dashed #FFD700;
+            border-bottom: 3px dashed #FFD700; /* Dashed yellow lines for roads */
+        }
+
+        /* Safe Zone */
+        .safe-zone {
+            width: 100%;
+            height: 70px;
+            background-color: #4CAF50; /* Green for safe zones */
+            position: absolute;
+            border-top: 3px solid #388E3C;
+            border-bottom: 3px solid #388E3C;
+        }
+
+        /* Cars */
+        .obstacle {
+            width: 70px;
+            height: 70px;
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-color: transparent; /* Ensure there's no fallback color */
+        }
+
+        /* Car images */
+        .car-right {
+            background-image: url('vintage-car-png.png'); /* Right-moving car */
+        }
+
+        .car-left {
+            background-image: url('INVERTvintage-car-png.png'); /* Left-moving car */
+        }
+
+        /* Countdown display */
+        #countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: #FFD700;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            z-index: 100;
+            animation: pulse 1s infinite; /* Simple pulsing effect for countdown */
+        }
+
+        /* Instructions for movement */
+        #instructions {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #FFD700;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            display: none; /* Initially hidden */
+            z-index: 100;
+        }
+
+        /* Pulse animation for countdown */
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div id="countdown"></div>
+        <div id="instructions">Use arrow keys to move!</div>
+        <div class="frog"></div>
+
+        <!-- Safe start zone -->
+        <div class="safe-zone" style="top: 770px;"></div>
+
+        <!-- Road lanes -->
+        <div class="lane road" style="top: 700px;"></div>
+        <div class="lane road" style="top: 630px;"></div>
+        <div class="lane road" style="top: 560px;"></div>
+        <div class="lane road" style="top: 490px;"></div>
+        <div class="lane road" style="top: 420px;"></div>
+        <div class="lane road" style="top: 350px;"></div>
+        <div class="lane road" style="top: 280px;"></div>
+        <div class="lane road" style="top: 210px;"></div>
+        <div class="lane road" style="top: 140px;"></div>
+        <div class="lane road" style="top: 70px;"></div>
+
+        <!-- Safe goal zone -->
+        <div class="safe-zone" style="top: 0;"></div>
+    </div>
+
+    <script>
+        const frog = document.querySelector('.frog');
+        const game = document.getElementById('game');
+        const countdownElement = document.getElementById('countdown');
+        let frogPosition = { x: 275, y: 770 }; // Starting position of the frog
+        let canMove = false; // Prevent movement until countdown is done
+        let attempts = 1; // Initialize attempt counter
+
+        const roadHeight = 70; // Height of each road or grass lane
+        const gameHeight = 840; // Game container height
+        const frogMoveDistance = 70; // Distance moved when the frog jumps
+
+        // Array of lane speeds, car limits, and delay times for car spawning
+        const laneConfigs = [
+            { lane: 700, speed: -2, maxCars: 1, delay: 3000 },
+            { lane: 630, speed: 2, maxCars: 2, delay: 3500 },
+            { lane: 560, speed: -3, maxCars: 2, delay: 4000 },
+            { lane: 490, speed: 3, maxCars: 2, delay: 4500 },
+            { lane: 420, speed: -4, maxCars: 3, delay: 5000 },
+            { lane: 350, speed: 4, maxCars: 3, delay: 5500 },
+            { lane: 280, speed: -3, maxCars: 4, delay: 6000 },
+            { lane: 210, speed: 3, maxCars: 4, delay: 6500 },
+            { lane: 140, speed: -3, maxCars: 4, delay: 7000 },
+            { lane: 70, speed: 2, maxCars: 4, delay: 7500 }
+        ];
+
+        // Function to handle key presses to move the frog
+        document.addEventListener('keydown', (event) => {
+            if (!canMove) return; // Disable movement until countdown is done
+            switch (event.key) {
+                case 'ArrowUp':
+                    if (frogPosition.y > 0) frogPosition.y -= frogMoveDistance;
+                    frog.classList.remove('frog-left');
+                    if (frogPosition.y === 0) {
+                        // Player wins, show attempts
+                        alert(`You Win! In ${attempts} Attempt(s)!`);
+                        resetGame(true); // Reset game and counter after win
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (frogPosition.y < gameHeight - frogMoveDistance) frogPosition.y += frogMoveDistance;
+                    frog.classList.remove('frog-left');
+                    break;
+                case 'ArrowLeft':
+                    if (frogPosition.x > 0) frogPosition.x -= 60;
+                    frog.classList.add('frog-left'); // Invert frog
+                    break;
+                case 'ArrowRight':
+                    if (frogPosition.x < 540) frogPosition.x += 60;
+                    frog.classList.remove('frog-left'); // Normal frog
+                    break;
+            }
+            updateFrogPosition();
+            checkCollisions();
+        });
+
+        // Update frog position
+        function updateFrogPosition() {
+            frog.style.left = `${frogPosition.x}px`;
+            frog.style.top = `${frogPosition.y}px`;
+        }
+
+        // Function to create obstacles (cars) with evenly spaced positions
+        function createInitialObstacles(type, lane, speed, maxCars) {
+            const laneWidth = 600; // Total width of the game lane
+            const spacePerCar = laneWidth / maxCars; // Calculate how much space each car gets
+
+            for (let i = 0; i < maxCars; i++) {
+                const obstacle = document.createElement('div');
+                obstacle.classList.add('obstacle', type);
+
+                let position = i * spacePerCar; // Evenly space the cars across the lane
+
+                if (speed > 0) {
+                    obstacle.classList.add('car-right'); // Right-moving car
+                    obstacle.style.left = `${position}px`;
+                } else {
+                    obstacle.classList.add('car-left'); // Left-moving car
+                    obstacle.style.left = `${position}px`;
+                }
+
+                obstacle.style.top = `${lane}px`;
+                obstacle.dataset.speed = speed;
+                obstacle.dataset.lane = lane; // Track which lane the car belongs to
+                game.appendChild(obstacle);
+            }
+        }
+
+        // Move obstacles across the screen
+        function moveObstacles() {
+            const obstacles = document.querySelectorAll('.obstacle');
+            obstacles.forEach(obstacle => {
+                let position = parseFloat(obstacle.style.left);
+                position += parseFloat(obstacle.dataset.speed);
+                if (position > 600) position = -70; // Cars moving right wrap around
+                if (position < -70) position = 600; // Cars moving left wrap around
+                obstacle.style.left = `${position}px`;
+            });
+
+            checkCollisions();
+        }
+
+        // Collision detection with only the front of the cars
+        function checkCollisions() {
+            const obstacles = document.querySelectorAll('.obstacle');
+            const frogRect = frog.getBoundingClientRect();
+
+            obstacles.forEach(obstacle => {
+                const obstacleRect = obstacle.getBoundingClientRect();
+                const isCarMovingRight = obstacle.classList.contains('car-right');
+                const isCarMovingLeft = obstacle.classList.contains('car-left');
+                
+                let carFront;
+                
+                // If the car is moving right, the front is on the right side of the car
+                if (isCarMovingRight) {
+                    carFront = obstacleRect.right - 10; // Only the front 10px can reset the player
+                }
+                // If the car is moving left, the front is on the left side of the car
+                else if (isCarMovingLeft) {
+                    carFront = obstacleRect.left + 10; // Only the front 10px can reset the player
+                }
+
+                // Check if the frog is intersecting the front of the car
+                if (
+                    isCarMovingRight && 
+                    frogRect.left < carFront &&
+                    frogRect.right > obstacleRect.right - 10 &&
+                    frogRect.top < obstacleRect.bottom &&
+                    frogRect.bottom > obstacleRect.top
+                ) {
+                    resetGame(); // Player collided with car, reset
+                }
+                else if (
+                    isCarMovingLeft &&
+                    frogRect.right > carFront &&
+                    frogRect.left < obstacleRect.left + 10 &&
+                    frogRect.top < obstacleRect.bottom &&
+                    frogRect.bottom > obstacleRect.top
+                ) {
+                    resetGame(); // Player collided with car, reset
+                }
+            });
+        }
+
+        // Reset game when the player hits the front of a car or wins
+        function resetGame(won = false) {
+            frogPosition = { x: 275, y: 770 }; // Reset frog position
+            if (won) {
+                attempts = 0; // Reset attempt counter after win
+            } else {
+                attempts++; // Increment the attempt counter on reset
+            }
+            updateFrogPosition();
+        }
+
+        // Start the countdown before the game begins
+        function startCountdown() {
+            let countdown = 3; // Start with 3 seconds
+            countdownElement.textContent = countdown;
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown === 0) {
+                    countdownElement.textContent = 'GO!';
+                } else if (countdown < 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.style.display = 'none'; // Hide countdown
+                    document.getElementById('instructions').style.display = 'none'; // Hide instructions
+                    canMove = true; // Allow the cat to move
+                    attempts++; // Increment attempts when the game starts
+                } else {
+                    countdownElement.textContent = countdown;
+                    document.getElementById('instructions').style.display = 'block'; // Show instructions
+                }
+            }, 1000); // Update every second
+        }
+
+        // Create initial obstacles (cars) with evenly spaced positions at the start of the game
+        function createInitialCarPositions() {
+            laneConfigs.forEach((laneData) => {
+                createInitialObstacles(
+                    laneData.speed > 0 ? 'car-right' : 'car-left',
+                    laneData.lane,
+                    laneData.speed,
+                    laneData.maxCars
+                );
+            });
+        }
+
+        // Move obstacles every 20ms
+        setInterval(moveObstacles, 20);
+
+        // Start the game with cars already on the screen and evenly spaced
+        createInitialCarPositions();
+        startCountdown();
+    </script>
+</body>
+</html>

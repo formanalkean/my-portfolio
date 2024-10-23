@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alejandro Forman | Portfolio</title>
+    <link rel="stylesheet" href="index.css">
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About Me</a></li>
+            <li><a href="#resume">Resume</a></li>
+            <li><a href="#projects">Game</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="home">
+        <h1>Alejandro Forman's Portfolio</h1>
+    </section>
+
+    <!-- About Me Section -->
+    <section id="about">
+        <h2>About Me</h2>
+        <p>
+            I’m Alejandro, a senior majoring in Information Technology with a focus on Cybersecurity.
+            I’m passionate about learning new technologies, building computers, and exploring AI. 
+            In my spare time, I enjoy playing video games, working out, and learning about anything that I might find interesting
+            at the time, tech related or not.
+        </p>
+    </section>
+
+    <!-- Resume Section -->
+    <section id="resume">
+        <h2>Resume</h2>
+        <p>You can view my resume using the link below!:</p>
+        <a href="Resume_2_6_24.docx.pdf" target="_blank" class="cta-btn">View Resume</a> 
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects">
+        <h2>My Game</h2>
+        <div class="project">
+            <div>
+                <h3>Crossy Cat</h3>
+                <p>I created a game as part of my WEB 3500 course. <strong>Check it out!</strong></p>
+                <a href="game.html" target="_blank" class="cta-btn">Play the Game</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cat Image Carousel Section -->
+    <section id="cat-carousel">
+        <h2>Random Cats</h2>
+        <div class="carousel">
+            <div class="carousel-inner"></div>
+            <button class="prev">❮</button>
+            <button class="next">❯</button>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <h2>Contact Me</h2>
+        <form id="contact-form" action="https://formspree.io/f/mdkokloq" method="POST">
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="email" name="email" placeholder="Your Email" required>
+            <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+            <input type="submit" value="Send">
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Alejandro Forman. All Rights Reserved.</p>
+    </footer>
+
+    <!-- jQuery Script for Interactivity -->
+    <script src="index.js"></script>
+
+    <!-- Script for Cat Image Carousel -->
+    <script src="cat-carousel.js"></script>
+</body>
+</html>
